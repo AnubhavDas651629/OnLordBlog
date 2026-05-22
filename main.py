@@ -1,10 +1,12 @@
 from re import template
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles 
 from fastapi.responses import HTMLResponse  # Fixed typo here (HIML -> HTML)
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
@@ -28,8 +30,8 @@ posts: list[dict] = [
 # include_in_schema=False -> donnot add documentions in http://127.0.0.1:8000/docs
 # response_class=HTMLResponse -> helps responses get in HTML format
 
-@app.get("/", include_in_schema=False)
-@app.get("/posts", include_in_schema=False)
+@app.get("/", include_in_schema=False, name = "home")
+@app.get("/posts", include_in_schema=False, name = "posts")
 
 # using {"posts": posts} via jinja 2 to access posts from home.html
 
