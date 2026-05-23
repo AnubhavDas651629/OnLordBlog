@@ -1,5 +1,5 @@
 from re import template
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.staticfiles import StaticFiles 
 from fastapi.responses import HTMLResponse  # Fixed typo here (HIML -> HTML)
 from fastapi.templating import Jinja2Templates
@@ -35,8 +35,19 @@ posts: list[dict] = [
 
 # using {"posts": posts} via jinja 2 to access posts from home.html
 
+
+# request: Request -> needed to use the jijga 2 templates
 def home(request: Request):
     return templates.TemplateResponse(request, "home.html", {"posts": posts, "title": "Home"},)
+
+
+@app.get("/posts/{post_id}", include_in_schema=False)
+def post_page(request: Request,post_id: int):  
+    for post in posts:
+        if post.get("id") == post_id:
+            title = post['title'][:50]
+            return templates.TemplateResponse(request, "post.html", {"post": post, "title": title} )
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "post not found")
 
 @app.get("/api/posts")
 def get_posts():  
@@ -49,5 +60,4 @@ def get_post(post_id: int):
     for post in posts:
         if post.get("id") == post_id:
             return post
-    return{ "error": "post not found"}
-    
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "post not found")
