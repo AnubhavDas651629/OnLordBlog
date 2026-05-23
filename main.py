@@ -44,7 +44,7 @@ def get_posts():
 
 # in this for examples an user enters api/posts/12002 in the url, then 12002 gets posted as post_id in the the function
 # anything else apart from integer returns an validation error
-app.get(f"/api/posts/{post_id}")
+@app.get("/api/posts/{post_id}")
 def get_post(post_id: int):  
     for post in posts:
         if post.get("id") == post_id:
