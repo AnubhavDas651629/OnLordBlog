@@ -1,8 +1,11 @@
 from re import template
 from fastapi import FastAPI, Request, HTTPException, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles 
 from fastapi.responses import HTMLResponse  # Fixed typo here (HIML -> HTML)
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 app = FastAPI()
 
