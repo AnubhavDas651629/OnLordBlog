@@ -1,9 +1,7 @@
-from re import template
-from fastapi import FastAPI, Request, HTTPException, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles 
-from fastapi.responses import HTMLResponse  # Fixed typo here (HIML -> HTML)
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -55,7 +53,6 @@ def post_page(request: Request,post_id: int):
 @app.get("/api/posts")
 def get_posts():  
     return posts
-
 # in this for examples an user enters api/posts/12002 in the url, then 12002 gets posted as post_id in the the function
 # anything else apart from integer returns an validation error
 @app.get("/api/posts/{post_id}")
@@ -64,3 +61,48 @@ def get_post(post_id: int):
         if post.get("id") == post_id:
             return post
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "post not found")
+
+
+@app.exception_handler(StarletteHTTPException)
+def general_http_exception_handler(request: Request, exception: StarletteHTTPException):
+    message = (
+        exception.detail
+        if exception.detail 
+        else "An error occured. Please check your request and try again"
+    )
+
+    if request.url.path.startswith("/api"):
+        return JSONResponse(
+            status_code= exception.status_code,
+            content = {"detail":message}
+        )
+    
+    return templates.TemplateResponse(request, "error.html",
+        {
+            "status_code":exception.status_code,
+            "title": exception.status_code,
+            "message": message,
+        },
+        status_code=exception.status_code,
+    )
+
+
+# http://127.0.0.1:8000/posts/hello, handles this kind of error if someone enetered "hello", instead of int and helps ui from breaking
+@app.exception_handler(RequestValidationError)
+def validation_exception_handler(request: Request, exception: RequestValidationError):
+    if request.url.path.startswith("/api"):
+        return JSONResponse(
+            status_code = status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content = {"detail": exception.errors()},
+        )
+    return templates.TemplateResponse(
+        request,
+        "error.html",
+        {
+        "status_code": status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "title": status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "message": "Invalid request. Please check your input and try again",
+        },
+        status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    )
+
