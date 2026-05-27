@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from schemas import PostCreate, PostResponse
 
 app = FastAPI()
 
@@ -50,7 +51,8 @@ def post_page(request: Request,post_id: int):
             return templates.TemplateResponse(request, "post.html", {"post": post, "title": title} )
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "post not found")
 
-@app.get("/api/posts")
+# PostResponse is from schmemas.py
+@app.get("/api/posts", response_model=list[PostResponse])
 def get_posts():  
     return posts
 # in this for examples an user enters api/posts/12002 in the url, then 12002 gets posted as post_id in the the function
