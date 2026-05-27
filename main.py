@@ -55,9 +55,23 @@ def post_page(request: Request,post_id: int):
 @app.get("/api/posts", response_model=list[PostResponse])
 def get_posts():  
     return posts
+
+@app.post("/api/posts", response_model=PostResponse, status_code=status.HTTP_201_CREATED,)
+def create_post(post: PostCreate):
+    new_id = max(p["id"] for p in posts) + 1 if posts else 1
+    new_post = {
+        "id": new_id,
+        "author": post.author,
+        "title": post.title,
+        "content": post.content,
+        "date_posted": "April 23, 2025",
+    }
+    posts.append(new_post)
+    return new_post
+
 # in this for examples an user enters api/posts/12002 in the url, then 12002 gets posted as post_id in the the function
 # anything else apart from integer returns an validation error
-@app.get("/api/posts/{post_id}")
+@app.get("/api/posts/{post_id}", response_model=PostResponse)
 def get_post(post_id: int):  
     for post in posts:
         if post.get("id") == post_id:
