@@ -1,9 +1,12 @@
+from turtle import title
 from typing import Annotated
+from unittest import result
 from fastapi import FastAPI, HTTPException, Request, status, Depends
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.sql.functions import user
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from schemas import PostCreate, PostResponse, UserCreate, UserResponse
 from sqlalchemy import select
@@ -32,20 +35,82 @@ templates = Jinja2Templates(directory="templates")
 
 
 # request: Request -> needed to use the jijga 2 templates
-def home(request: Request):
-    return templates.TemplateResponse(request, "home.html", {"posts": posts, "title": "Home"},)
+@app.get("/", include_in_schema=False, name="home")
+@app.get("/posts", include_in_schema=False, name="posts")
+def home(request: Request, db: Annotated[Session, Depends(get_db)]):
+    result= db.execute(select(models.Post))
+    posts = result.scalar().all()
+    return templates.TemplateResponse(
+        request,
+        "home.html",
+        {"posts":posts, "title":"Home"},
+    )
 
 
 @app.get("/posts/{post_id}", include_in_schema=False)
-def post_page(request: Request,post_id: int):  
-    for post in posts:
-        if post.get("id") == post_id:
-            title = post['title'][:50]
-            return templates.TemplateResponse(request, "post.html", {"post": post, "title": title} )
+def post_page(request: Request,post_id: int, db: Annotated[Session, Depends(get_db)]):  
+    result = db.execute(select(models.Post).where(models.Post.id == post_id))
+    post = result.scalar().first()
+    if post:
+        title = post.title[:50]
+        return templates.TemplateResponse(
+            request,
+            "post.html",
+            {"post":post, "title": title},
+        )
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "post not found")
 
 @app.post("/api/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED,)
-def create_user(user: UserResponse):
+def create_user(user: UserResponse, db: Annotated[Session, Depends(get_db)]): #get_db each database request gets its own session and clears up after that
+    result = db.execute(select(models.User).where(models.User.username == user.username),
+    )
+    existing_user = result.scalars().first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="username already exists",
+        )
+
+    result = db.execute(select(models.User).where(models.User.email == user.email),
+    )
+    existing_email = result.scalars().first()
+
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="email already exists",
+        )
+    new_user = models.User(
+        username=user.username,
+        email=user.email,
+    )
+    db.add(new_user) # adds new user to database
+    db.commit() # commits the user to the database
+    db.refresh(new_user) # refreshes the database
+
+    return new_user
+
+@app.get("/api/users/{user_id}", response_model=UserResponse)
+def get_user(user_id: int, db: Annotated[Session, Depends(get_db)]): 
+    result = db.execute(
+        select(models.User).where(models.User.id == user_id),
+        )
+    if user:
+        return user
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "user not found")
+
+@app.get("/api/users/{user_id}/posts", response_model=list[PostResponse])
+def get_user_post(user_id: int, db = Annotated[Session, Depends(get_db)]):
+    result = db.excecute(select(models.User).where(models.User.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+
     
 
 # PostResponse is from schmemas.py
