@@ -60,6 +60,28 @@ def post_page(request: Request,post_id: int, db: Annotated[Session, Depends(get_
         )
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "post not found")
 
+@app.get("/users/{user_id}/posts", include_in_schema=False, name="user_posts")
+def user_posts_page(
+    request: Request,
+    user_id: int, 
+    db: Annotated[Session, Depends(get_db),]
+):  
+    result = db.execute(select(models.User).where(models.User,id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found", 
+        )
+
+    result = db.execute(select(models.Post).where(models.Post.user_id==user_id))
+    posts = result.scalars().all()
+    return templates.TemplateResponse(
+        request,
+        "user_posts.html",
+        {"posts": posts, "user": user, "title": f"{user.username}'s Posts"},
+    )
+
 @app.post("/api/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED,)
 def create_user(user: UserResponse, db: Annotated[Session, Depends(get_db)]): #get_db each database request gets its own session and clears up after that
     result = db.execute(select(models.User).where(models.User.username == user.username),
@@ -108,37 +130,45 @@ def get_user_post(user_id: int, db = Annotated[Session, Depends(get_db)]):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
-        )
-
-
-    
+        )    
 
 # PostResponse is from schmemas.py
-@app.get("/api/posts", response_model=list[PostResponse])
-def get_posts():  
+@app.get("/api/post", response_model=list[PostResponse])
+def get_posts(db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.Post))
+    posts = result.scalar().all()
     return posts
 
-@app.post("/api/posts", response_model=PostResponse, status_code=status.HTTP_201_CREATED,)
-def create_post(post: PostCreate):
-    new_id = max(p["id"] for p in posts) + 1 if posts else 1
-    new_post = {
-        "id": new_id,
-        "author": post.author,
-        "title": post.title,
-        "content": post.content,
-        "date_posted": "April 23, 2025",
-    }
-    posts.append(new_post)
-    return new_post
 
+@app.post("/api/posts", response_model=PostResponse, status_code=status.HTTP_201_CREATED,)
+def create_post(post: PostCreate, db:Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.id == post.user_id))
+    user = result.scalar().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    new_post = models.Post(
+        title = post.title,
+        content = post.content,
+        user_id = post.user_id,
+    )
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+    return new_post
 # in this for examples an user enters api/posts/12002 in the url, then 12002 gets posted as post_id in the the function
 # anything else apart from integer returns an validation error
 @app.get("/api/posts/{post_id}", response_model=PostResponse)
-def get_post(post_id: int):  
-    for post in posts:
-        if post.get("id") == post_id:
-            return post
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "post not found")
+def get_post(post_id: int, db:Annotated[Session,Depends(get_db)]):
+    result = db.execute(select(models.Post).where(models.Post.id == post_id))
+    post = result.scalar().first()
+    if post:
+        return post
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Post not found")
+    
+
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -163,6 +193,7 @@ def general_http_exception_handler(request: Request, exception: StarletteHTTPExc
         },
         status_code=exception.status_code,
     )
+
 
 
 # http://127.0.0.1:8000/posts/hello, handles this kind of error if someone enetered "hello", instead of int and helps ui from breaking
