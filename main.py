@@ -181,7 +181,16 @@ def update_post_full(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail = "Post not found",
         )    
-    if post_data
+    if post_data.user_id != post.user_id:
+        result = db.execute(
+            select(models.User).where(models.User.id == post_data.user_id),
+        )
+        user = result.scalar().first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail = "User not found",
+            )
 
 
 @app.exception_handler(StarletteHTTPException)
