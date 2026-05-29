@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 import models
 from database import Base, engine, get_db
 
-
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
@@ -28,7 +27,7 @@ templates = Jinja2Templates(directory="templates")
 
 # include_in_schema=False -> donnot add documentions in http://127.0.0.1:8000/docs
 # response_class=HTMLResponse -> helps responses get in HTML format
-
+# request: Request -> needed to use the jijga 2 template
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/posts", include_in_schema=False, name="posts")
 def home(request: Request, db: Annotated[Session, Depends(get_db)]):
@@ -42,17 +41,7 @@ def home(request: Request, db: Annotated[Session, Depends(get_db)]):
 # using {"posts": posts} via jinja 2 to access posts from home.html
 
 
-# request: Request -> needed to use the jijga 2 templates
-# @app.get("/", include_in_schema=False, name="home")
-# @app.get("/posts", include_in_schema=False, name="posts")
-# def home(request: Request, db: Annotated[Session, Depends(get_db)]):
-#     result= db.execute(select(models.Post))
-#     posts = result.scalars().all()
-#     return templates.TemplateResponse(
-#         request,
-#         "home.html",
-#         {"posts":posts, "title":"Home"},
-#     )
+
 
 
 @app.get("/posts/{post_id}", include_in_schema=False)

@@ -1,18 +1,22 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_session, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./blog.db"
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./blog.db"
 
 #engine is the connection to the database, 
 #connect_args={"check_same_thread": False} this is specifc for sql lite only, and not needed to postgress or mysql
-engine = create_engine(SQLALCHEMY_DATABASE_URL  , connect_args={"check_same_thread": False},)
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL  , connect_args={"check_same_thread": False},)
 
-sessionLocal = sessionmaker(autocommit = False, autoflush=False, bind=engine)
+AsyncsessionLocal = async_sessionmaker(
+    engine, 
+    class_ = AsyncSession,
+    expire_on_commit=False, # prevents lazy loading
+)
 
 class Base(DeclarativeBase):
     pass
 
-def get_db():
-    with sessionLocal() as db:
-        yield db
+async def get_db():
+    async with AsyncsessionLocal() as session:
+        yield session
 
