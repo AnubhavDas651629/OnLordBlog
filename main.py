@@ -1,4 +1,4 @@
-from turtle import title
+from turtle import title, update
 from typing import Annotated
 from unittest import result
 from fastapi import FastAPI, HTTPException, Request, status, Depends
@@ -220,16 +220,16 @@ def update_post_partial(
             status_code= status.HTTP_404_BAD_REQUEST,
             detail= "Post not found"
         )
-    if post_data.user_id != post.user_id:
-        result = db.execute(
-            select(models.User).where(models.User.id == post_data.user_id),
-        )
-        user = result.scalar().first()
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Post not found"
-            )
+    #exclude_unset = True -> if someone only changed the title from A to B then other fields donnot gets changed into none but stays the same as it was
+    # update_data is then basically a dictionary that is key title and new value
+    update_data = post_data.model_dump(exclude_unset=True)  
+    for field, value in update_data.items():  # example if we only update the title, then 'field' is title and the new title value is 'value'
+        setattr(post, field, value)
+
+    db.commit()
+    db.refresh(post)
+    return post
+    
     
 
 @app.exception_handler(StarletteHTTPException)
