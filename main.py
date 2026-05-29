@@ -1,22 +1,31 @@
 from pyexpat import model
 from turtle import title, update
+from contextlib import asynccontextmanager
 from typing import Annotated
+from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
 from unittest import result
 from fastapi import FastAPI, HTTPException, Request, status, Depends
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.sql.functions import user
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from schemas import PostCreate, PostResponse, UserCreate, UserResponse, PostUpdate, UserUpdate
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 import models
 from database import Base, engine, get_db
 
-Base.metadata.create_all(bind=engine)
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    #startup, basically turning on the async engine on
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    await engine.dispose
+
+app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
