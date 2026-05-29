@@ -9,6 +9,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     pass
+
 class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -22,6 +23,12 @@ class PostBase(BaseModel):
 
 class PostCreate(PostBase):
     user_id: int # TEMPORARY
+
+class PostUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=100)
+    content: str | None = Field(default=None, min_length=1)
+
+
 
 
 

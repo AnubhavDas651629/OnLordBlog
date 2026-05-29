@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-SQLALCHEMY_DATABASE_URL = ""
+SQLALCHEMY_DATABASE_URL = "sqlite:///./blog.db"
 
 #engine is the connection to the database, 
 #connect_args={"check_same_thread": False} this is specifc for sql lite only, and not needed to postgress or mysql
@@ -15,3 +15,4 @@ class Base(DeclarativeBase):
 def get_db():
     with sessionLocal() as db:
         yield db
+

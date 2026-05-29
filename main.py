@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.sql.functions import user
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from schemas import PostCreate, PostResponse, UserCreate, UserResponse
+from schemas import PostCreate, PostResponse, UserCreate, UserResponse, PostUpdate
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 import models
@@ -168,7 +168,20 @@ def get_post(post_id: int, db:Annotated[Session,Depends(get_db)]):
         return post
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Post not found")
     
-
+@app.put("/api/posts/{post_id}", response_model=PostResponse)
+def update_post_full(
+    post_id: int, 
+    post_data: PostCreate,
+    db: Annotated[Session, Depends(get_db)],
+):
+    result = db.execute(select(models.Post).where(models.Post.id == post_id))
+    post = result.scalars().first()
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail = "Post not found",
+        )    
+    if post_data
 
 
 @app.exception_handler(StarletteHTTPException)
