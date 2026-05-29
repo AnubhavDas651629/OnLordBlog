@@ -18,9 +18,10 @@ class User(Base):
         nullable=True,
         default = None,
     )
-    #creates a one to many relationship, if one user creates many posts it links all the posts to the author via the relationship command to author
+    # creates a one to many relationship, if one user creates many posts it links all the posts to the author via the relationship command to author
     # forward referecning, till now Post is not defined, will define later in this code base 
-    posts: Mapped[list[Post]] = relationship(back_populates="author")
+    # cascade = all -> tells that if a user is deleted than all its post is deleted too
+    posts: Mapped[list[Post]] = relationship(back_populates="author", cascade="all, delete-orphan",)
 
     @property
     def image_path(self) -> str:
