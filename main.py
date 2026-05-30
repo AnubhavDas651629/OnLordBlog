@@ -6,12 +6,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from schemas import PostCreate, PostResponse, UserCreate, UserResponse, PostUpdate, UserUpdate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 import models
 from database import Base, engine, get_db
+from routers import posts, users
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -27,6 +28,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/media", StaticFiles(directory="media"), name = "media")
 
 templates = Jinja2Templates(directory="templates")
+
+app.include_router(users.router, prefix="/api.users", tags=["users"])
+app.include_router(posts.router, prefix="/api.posts", tags=["posts"])
 
 
 # include_in_schema=False -> donnot add documentions in http://127.0.0.1:8000/docs
