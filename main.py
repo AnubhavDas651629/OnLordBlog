@@ -1,14 +1,10 @@
-from pyexpat import model
-from turtle import title, update
 from contextlib import asynccontextmanager
 from typing import Annotated
 from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
-from unittest import result
 from fastapi import FastAPI, HTTPException, Request, status, Depends
 from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.sql.functions import user
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from schemas import PostCreate, PostResponse, UserCreate, UserResponse, PostUpdate, UserUpdate
 from sqlalchemy import select
