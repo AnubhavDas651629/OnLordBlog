@@ -1,3 +1,4 @@
+from nt import access
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -6,7 +7,7 @@ from sqlalchemy.orm import selectinload
 import models
 from database import get_db
 import routers
-from schemas import PostResponse, UserCreate, UserPrivate, UserPublic, UserUpdate
+from schemas import PostResponse, Token, UserCreate, UserPrivate, UserPublic, UserUpdate
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
@@ -51,6 +52,42 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
     await db.commit() # commits the user to the database
     await db.refresh(new_user) # refreshes the database
     return new_user
+
+
+@router.post("/token", response_model=Token)
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    # look up user by email(case insensitive)
+    # Note: OAuthpasOAuth2PasswordRequestForm uses "username" field, but we treat it as email
+    result = await db.execute(
+        select(models.User).where(
+            func.lower(models.User.email) == form_data.username.lower(), # form_data is in OAuthpasOAuth2PasswordRequestForm and it supports only 2 arguments, .username and .password hence we aare comapring email wiht username
+        )
+    )
+    user = result.scalars().first()
+
+    #Verify user exixts and password is correct
+    # Don't reveal which one failed
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate":"Bearer"}
+        )
+
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token = create_access_token(
+        data={"sub": str(user.id)},
+        expires_delta=access_token_expires
+    )
+
+    return Token(access_token=access_token, token_type="bearer")
+
+
+
+
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]): 
