@@ -23,10 +23,9 @@ async def lifespan(_app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
-    await engine.dispose
+    await engine.dispose()
 
 app = FastAPI(lifespan=lifespan)
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.mount("/media", StaticFiles(directory="media"), name = "media")
@@ -55,7 +54,7 @@ async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
 
 @app.get("/posts/{post_id}", include_in_schema=False)
 async def post_page(request: Request,post_id: int, db: Annotated[AsyncSession, Depends(get_db)]):  
-    result = db.execute(
+    result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .where(models.Post.id == post_id),
@@ -101,7 +100,7 @@ async def user_posts_page(
 
 @app.post("/api/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED,)
 async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]): #get_db each database request gets its own session and clears up after that
-    result = db.execute(select(models.User).where(models.User.username == user.username),
+    result = await db.execute(select(models.User).where(models.User.username == user.username),
     )
     existing_user = result.scalars().first()
 
@@ -111,7 +110,7 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
             detail="username already exists",
         )
 
-    result = db.execute(select(models.User).where(models.User.email == user.email),
+    result = await db.execute(select(models.User).where(models.User.email == user.email),
     )
     existing_email = result.scalars().first()
 
@@ -131,7 +130,7 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
 
 @app.get("/api/users/{user_id}", response_model=UserResponse)
 async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]): 
-    result = db.execute(
+    result = await db.execute(
         select(models.User).where(models.User.id == user_id),
         )
     user = result.scalars().first()
@@ -141,14 +140,14 @@ async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 
 @app.get("/api/users/{user_id}/posts", response_model=list[PostResponse])
 async def get_user_post(user_id: int, db = Annotated[AsyncSession, Depends(get_db)]):
-    result = db.execute(select(models.User).where(models.User.id == user_id))
+    result = await db.execute(select(models.User).where(models.User.id == user_id))
     user = result.scalars().first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )    
-    result = db.execute(
+    result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .where(models.Post.user_id == user_id))
@@ -170,7 +169,7 @@ async def update_user(
         )
     
     if user_update.username is not None and user_update.username != user.username:
-        result = db.execute(
+        result = await db.execute(
             select(models.User).where(models.User.username == user_update.username),     
         )
         existing_user = result.scalars().first()
@@ -180,7 +179,7 @@ async def update_user(
                 detail="Username already exists",
             )
     if user_update.email is not None and user_update.email != user.email:
-        result = db.execute(
+        result = await db.execute(
             select(models.User).where(models.User.email == user_update.email),     
         )
         existing_user = result.scalars().first()
@@ -215,7 +214,7 @@ async def delete_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
     
 
 # PostResponse is from schmemas.py
-@app.get("/api/post", response_model=list[PostResponse])
+@app.get("/api/posts", response_model=list[PostResponse])
 async def get_posts(db: Annotated[AsyncSession, Depends(get_db)]):
     result = await db.execute(
         select(models.Post).options(selectinload(models.Post.author))
@@ -247,7 +246,7 @@ async def create_post(post: PostCreate, db:Annotated[AsyncSession, Depends(get_d
 # anything else apart from integer returns an validation error
 @app.get("/api/posts/{post_id}", response_model=PostResponse)
 async def get_post(post_id: int, db:Annotated[AsyncSession,Depends(get_db)]):
-    result = db.execute(
+    result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .where(models.Post.id == post_id))
@@ -262,7 +261,7 @@ async def update_post_full(
     post_data: PostCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    result = db.execute(select(models.Post).where(models.Post.id == post_id))
+    result = await db.execute(select(models.Post).where(models.Post.id == post_id))
     post = result.scalars().first()
     if not post:
         raise HTTPException(
@@ -270,7 +269,7 @@ async def update_post_full(
             detail = "Post not found",
         )    
     if post_data.user_id != post.user_id:
-        result = db.execute(
+        result = await db.execute(
             select(models.User).where(models.User.id == post_data.user_id),
         )
         user = result.scalars().first()
@@ -287,7 +286,7 @@ async def update_post_full(
     await db.refresh(post, attribute_names=["author"])
     return post
 
-@app.patch("/api/post/{post_id}", response_model=PostResponse)
+@app.patch("/api/posts/{post_id}", response_model=PostResponse)
 async def update_post_partial(
     post_id: int,
     post_data: PostUpdate,
@@ -297,7 +296,7 @@ async def update_post_partial(
     post = result.scalars().first()
     if not post:
         raise HTTPException(
-            status_code= status.HTTP_404_BAD_REQUEST,
+            status_code= status.HTTP_404_NOT_FOUND,
             detail= "Post not found"
         )
     #exclude_unset = True -> if someone only changed the title from A to B then other fields donnot gets changed into none but stays the same as it was
