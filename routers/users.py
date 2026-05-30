@@ -1,9 +1,11 @@
 from nt import access
 from typing import Annotated
+from unittest import result
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.functions import user
 import models
 from database import get_db
 import routers
@@ -77,6 +79,7 @@ async def login_for_access_token(
             headers={"WWW-Authenticate":"Bearer"}
         )
 
+    # Create access token with user id as subject, first line is creating the expiration date for create_access_token fn which we defined in auth.py
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": str(user.id)},
@@ -86,6 +89,43 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")
 
 
+@router.get("/me", response_model=UserPrivate)
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],  # oauth2_scheme used to extract the token from authorization header
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get the currently authenticated user"""
+    # we verify the token and get it and if nto present than raise an exception
+    user_id = verify_access_token(token)
+    if user_id is None:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token,",
+            headers={"WWW-Authenticated": "Bearer"},
+        )
+    # over here we are trying to convert the user_id into integer, and if it cannot be converted then raise error
+    try:
+        user_id_int = int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers = {"WWW-Authenticated": "Bearer"},
+        )
+    result = await db.execute(
+        select(models.User).where(models.User.id == user_id.int),
+    )
+    user = result.scalar().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+
+    
 
 
 
