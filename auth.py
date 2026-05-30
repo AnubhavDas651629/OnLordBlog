@@ -37,3 +37,22 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
         algorithm=settings.algorithm,
     )
     return encoded_jwt
+
+
+# takes a token string and returns a user ID if the token is valid
+# jwt -> json web token
+# jwt has a header(which contains the algorithm and type), a payload(which contains our data and expiration), and a signature(which proves that a token wasn't tampered with)
+def verify_access_token(token: str) -> str | None:
+    """verify a JWT token and return the subject (user id) if valid"""
+    try:
+        payload = jwt.decode(
+            token, 
+            settings.secret_key.get_secret_value(),
+            algorithms=[settings.algorithm],
+            options={"require":["exp", "sub"]}
+            )
+    except jwt.InvalidTokenError:
+        return None
+    else:
+        return payload.get("sub")
+        
