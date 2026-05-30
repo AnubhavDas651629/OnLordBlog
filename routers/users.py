@@ -6,15 +6,22 @@ from sqlalchemy.orm import selectinload
 import models
 from database import get_db
 import routers
-from schemas import PostResponse, UserCreate, UserResponse, UserUpdate
+from schemas import PostResponse, UserCreate, UserPrivate, UserPublic, UserUpdate
+from datetime import timedelta
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func, select
+from auth import create_access_token, hash_password, oauth2_scheme, verify_access_token, verify_password
+from config import settings
 
 router = APIRouter()
 
 
 # in here while defining the address in "", by default it is "/api/users", now "/{post_id}" in routers means "/api/users/{post_id}"
-@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED,)
+@router.post("", response_model=UserPrivate, status_code=status.HTTP_201_CREATED,)
 async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]): #get_db each database request gets its own session and clears up after that
-    result = await db.execute(select(models.User).where(models.User.username == user.username),
+    result = await db.execute(select(models.User).where(
+        func.lower(models.User.username) == user.username.lower()
+        ),
     )
     existing_user = result.scalars().first()
 
@@ -24,7 +31,9 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
             detail="username already exists",
         )
 
-    result = await db.execute(select(models.User).where(models.User.email == user.email),
+    result = await db.execute(select(models.User).where(
+        func.lower(models.User.email) == user.email.lower()
+        ),
     )
     existing_email = result.scalars().first()
 
@@ -35,7 +44,8 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
         )
     new_user = models.User(
         username=user.username,
-        email=user.email,
+        email=user.email.lower(),
+        password_hash = hash_password(user.password),
     )
     db.add(new_user) # adds new user to database
     await db.commit() # commits the user to the database

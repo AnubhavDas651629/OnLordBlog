@@ -1,3 +1,6 @@
+# When your application starts up, FastAPI reads the classes inside models.py and 
+# tells the database engine: "Create matching tables with these exact columns and constraints."
+
 from __future__ import annotations
 from datetime import UTC, datetime
 
