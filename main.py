@@ -23,14 +23,14 @@ async def lifespan(_app: FastAPI):
     await engine.dispose()
 
 app = FastAPI(lifespan=lifespan)
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/media", StaticFiles(directory="media"), name = "media")
 
 templates = Jinja2Templates(directory="templates")
 
-app.include_router(users.router, prefix="/api.users", tags=["users"])
-app.include_router(posts.router, prefix="/api.posts", tags=["posts"])
+app.include_router(users.router, prefix="/api/users", tags=["users"])
+app.include_router(posts.router, prefix="/api/posts", tags=["posts"])
 
 
 # include_in_schema=False -> donnot add documentions in http://127.0.0.1:8000/docs
@@ -44,12 +44,8 @@ async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
     return templates.TemplateResponse(
         request,
         "home.html",
-        {"posts": posts, "title": "Home"},
+        {"posts": posts, "title": "Home"}, # using {"posts": posts} via jinja 2 to access posts from home.html
     )
-# using {"posts": posts} via jinja 2 to access posts from home.html
-
-
-
 
 
 @app.get("/posts/{post_id}", include_in_schema=False)
@@ -68,6 +64,7 @@ async def post_page(request: Request,post_id: int, db: Annotated[AsyncSession, D
             {"post":post, "title": title},
         )
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "post not found")
+
 
 @app.get("/users/{user_id}/posts", include_in_schema=False, name="user_posts")
 async def user_posts_page(
@@ -97,8 +94,6 @@ async def user_posts_page(
         "user_posts.html",
         {"posts": posts, "user": user, "title": f"{user.username}'s Posts"},
     )
-    
-    
     
     
 
