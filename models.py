@@ -12,12 +12,14 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     username: Mapped[str] = mapped_column(String(50), unique = True, nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(String(200), nullable=False)
     #either string or none
     image_file: Mapped[str | None] = mapped_column(
         String(200),
         nullable=True,
         default = None,
     )
+
     # creates a one to many relationship, if one user creates many posts it links all the posts to the author via the relationship command to author
     # forward referecning, till now Post is not defined, will define later in this code base 
     # cascade = all -> tells that if a user is deleted than all its post is deleted too

@@ -1,2 +1,8 @@
-greenlet
+greenlet (for async)
 aiosqlite
+
+for authentication ->
+"passlib[argon2]"
+pyjwt
+pydantic-settings
+
