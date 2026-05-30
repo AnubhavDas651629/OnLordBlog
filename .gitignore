@@ -1,0 +1,15 @@
+# Environment variables and secrets
+.env
+
+# Virtual Environment (Crucial: prevents thousands of dependency files from uploading)
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Local SQLite Database (Stops your local development data from uploading)
+blog.db
+
+# macOS hidden system files
+.DS_Store
