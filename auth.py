@@ -99,5 +99,5 @@ async def get_current_user(
         )
     return user
 
-CurrentUser = Annotated[models.user, Depends(get_current_user)] # code basically saying that what we have here is a user object, and second part says that here is some meta data about the user
+CurrentUser = Annotated[models.User, Depends(get_current_user)] # code basically saying that what we have here is a user object, and second part says that here is some meta data about the user
 
