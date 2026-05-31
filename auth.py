@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from unittest import result
 import jwt
 from fastapi.security import OAuth2PasswordBearer, oauth2
 from pwdlib import PasswordHash
@@ -63,4 +64,40 @@ def verify_access_token(token: str) -> str | None:
         return None
     else:
         return payload.get("sub")
+
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.User:
+    user_id = verify_access_token(token)
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail = "Invalid or expired token",
+            headers ={"WWWW-Authenticated": "Bearer"},
+        )
         
+    try:
+        user_id_int = int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers = {"WWW-Authenticated": "Bearer"},
+        )
+
+    result = await db.execute(
+        select(models.User).where(models.User.id == user_id_int),
+    )
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(
+            status_code= status.HTTP_401_UNAUTHORIZED,
+            detail= " User not found",
+            headers={"WWW-Authenticated": "bearer"},
+        )
+    return user
+
+CurrentUser = Annotated[models.user, Depends(get_current_user)] # code basically saying that what we have here is a user object, and second part says that here is some meta data about the user
+
