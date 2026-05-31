@@ -5,6 +5,14 @@ from pwdlib import PasswordHash
 
 from config import settings
 
+from typing import Annotated
+from fastapi import Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+import models
+from config import settings
+from database import get_db
+
 password_hash = PasswordHash.recommended() #creates password hasher using argon 2 with recommended settings
 
 # OAuth2PasswordBearer extracts the token from the authorization header
