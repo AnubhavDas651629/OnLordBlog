@@ -1,3 +1,4 @@
+from turtle import pos
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import select, func
@@ -18,8 +19,8 @@ async def get_posts(
     skip: Annotated[int, query(ge=0)] = 0, # skip a particular post
     limit: Annotated[int, query(ge=1, le=100)] = 10, # sets the limit bewteen 1 and 100, betweeen the number of posts someone could ask for and default is set to 10
 ):
-    count_result = await db.execute(select(func.count()).select_from(models.Post))
-    total = count_result.scalar() or 0
+    count_result = await db.execute(select(func.count()).select_from(models.Post)) # from func.count()).select_from(models.Post) -> we are counting the total number of posts and adding a count
+    total = count_result.scalar() or 0 # this returns the toal count of post
 
     result = await db.execute(
         select(models.Post)
@@ -29,7 +30,16 @@ async def get_posts(
         .limit(limit),
         )
     posts = result.scalars().all()
-    return posts
+
+    has_more = skip + len(posts) < total
+
+    return PaginatedPostsResponse(
+        posts= [PostResponse.model_validate(post) for post in posts],
+        total=total,
+        skip=skip,
+        limit=limit,
+        has_more=has_more,
+    )
 
 
 @router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED,)
