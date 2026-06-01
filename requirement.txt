@@ -6,3 +6,6 @@ for authentication ->
 pyjwt
 pydantic-settings
 
+for photo related tasks ->
+pillow
+
