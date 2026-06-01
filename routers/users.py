@@ -1,3 +1,4 @@
+from ntpath import exists
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 from sqlalchemy import select
@@ -197,7 +198,7 @@ async def delete_user(user_id: int, current_user: CurrentUser, db: Annotated[Asy
 @router.patch("/{user_id}/picture", response_model=UserPrivate)
 async def upload_profile_picture(
     user_id: int,
-    file: UploadFile,
+    file: UploadFile, 
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -209,7 +210,7 @@ async def upload_profile_picture(
 
     content = await file.read()
 
-    if len(content) > settings.max_upload_size_bytes:
+    if len(content) > settings.max_upload_size_bytes:  # to get the size of the file 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"File too large. Maximum size is {settings.max_upload_size_bytes // (1024 * 1024)}MB",
@@ -231,5 +232,34 @@ async def upload_profile_picture(
 
     if old_filename:
         delete_profile_image(old_filename)
+
+    return current_user
+        
+
+@router.delete("/{user_id}/picture", response_model=UserPrivate)
+async def delete_user_picture(
+    user_id: int,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this user's picture"
+        )
+
+    old_filename = current_user.image_file
+
+    if old_filename is None:
+        raise HTTPException(
+            status_code = status.HTTP_403_FORBIDDEN,
+            detail= "No profile picture to delete",
+        )
+
+    current_user.image_file = None
+    await db.commit()
+    await db.refresh(current_user)
+
+    delete_profile_image(old_filename)
 
     return current_user
