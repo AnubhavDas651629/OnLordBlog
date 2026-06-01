@@ -1,22 +1,32 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import query, selectinload
 from sqlalchemy.sql.functions import current_user
 import models
 from database import get_db
-from schemas import PostCreate, PostResponse, PostUpdate
+from schemas import PostCreate, PostResponse, PostUpdate, PaginatedPostsResponse
 from auth import CurrentUser
 
 router = APIRouter()
 
-@router.get("", response_model=list[PostResponse])
-async def get_posts(db: Annotated[AsyncSession, Depends(get_db)]):
+@router.get("", response_model=PaginatedPostsResponse)
+async def get_posts(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    # skip 20 and limit 10 will give you posts from 21 to 30
+    skip: Annotated[int, query(ge=0)] = 0, # skip a particular post
+    limit: Annotated[int, query(ge=1, le=100)] = 10, # sets the limit bewteen 1 and 100, betweeen the number of posts someone could ask for and default is set to 10
+):
+    count_result = await db.execute(select(func.count()).select_from(models.Post))
+    total = count_result.scalar() or 0
+
     result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .order_by(models.Post.date_posted.desc()) # models.Post.date_posted.desc() -> this shows all the post in the website latest uploaded to last uploaded
+        .offset(skip)
+        .limit(limit),
         )
     posts = result.scalars().all()
     return posts
