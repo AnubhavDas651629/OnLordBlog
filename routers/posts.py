@@ -1,7 +1,7 @@
 from turtle import pos
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy import select, func
+from sqlalchemy import desc, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import query, selectinload
 from sqlalchemy.sql.functions import current_user
@@ -11,7 +11,6 @@ from schemas import PostCreate, PostResponse, PostUpdate, PaginatedPostsResponse
 from auth import CurrentUser
 
 router = APIRouter()
-
 @router.get("", response_model=PaginatedPostsResponse)
 async def get_posts(
     db: Annotated[AsyncSession, Depends(get_db)],
