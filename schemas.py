@@ -52,7 +52,7 @@ class PaginatedPostsResponse(BaseModel):
     total: int
     skip: int
     limit: int
-    has_more: bool
+    has_more: bool #teels if there are more posts to fetch
 
 
 

@@ -84,8 +84,7 @@ async def user_posts_page(
 ):  
     result = await db.execute(
         select(models.User)
-        .where(models.User.id == user_id)
-        .order_by(models.Post.date_posted.desc(),) 
+        .where(models.User.id == user_id) 
     )
     user = result.scalars().first()
     if not user:

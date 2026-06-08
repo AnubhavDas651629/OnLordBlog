@@ -5,6 +5,7 @@ from sqlalchemy import desc, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import query, selectinload
 from sqlalchemy.sql.functions import current_user
+from config import settings
 import models
 from database import get_db
 from schemas import PostCreate, PostResponse, PostUpdate, PaginatedPostsResponse
@@ -16,7 +17,7 @@ async def get_posts(
     db: Annotated[AsyncSession, Depends(get_db)],
     # skip 20 and limit 10 will give you posts from 21 to 30
     skip: Annotated[int, Query(ge=0)] = 0, # skip a particular post
-    limit: Annotated[int, Query(ge=1, le=100)] = 10, # sets the limit bewteen 1 and 100, betweeen the number of posts someone could ask for and default is set to 10
+    limit: Annotated[int, Query(ge=1, le=100)] = settings.posts_per_page, # sets the limit bewteen 1 and 100, betweeen the number of posts someone could ask for and default is set to 10
 ):
     count_result = await db.execute(select(func.count()).select_from(models.Post)) # from func.count()).select_from(models.Post) -> we are counting the total number of posts and adding a count
     total = count_result.scalar() or 0 # this returns the total count of post, if no post then 0

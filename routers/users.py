@@ -1,6 +1,6 @@
 from ntpath import exists
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -108,7 +108,10 @@ async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "user not found")
 
 @router.get("/{user_id}/posts", response_model=list[PostResponse])
-async def get_user_post(user_id: int, db = Annotated[AsyncSession, Depends(get_db)]):
+async def get_user_posts(user_id: int, db = Annotated[AsyncSession, Depends(get_db)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=0, le = 100)] = settings.posts_per_page, 
+    ):
     result = await db.execute(select(models.User).where(models.User.id == user_id))
     user = result.scalars().first()
     if not user:

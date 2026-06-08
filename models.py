@@ -43,7 +43,7 @@ class Post(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable = False, 
-        index=True
+        index=True 
     )
 
     date_posted: Mapped[datetime] = mapped_column(
