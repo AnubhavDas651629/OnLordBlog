@@ -19,7 +19,7 @@ async def get_posts(
     limit: Annotated[int, Query(ge=1, le=100)] = 10, # sets the limit bewteen 1 and 100, betweeen the number of posts someone could ask for and default is set to 10
 ):
     count_result = await db.execute(select(func.count()).select_from(models.Post)) # from func.count()).select_from(models.Post) -> we are counting the total number of posts and adding a count
-    total = count_result.scalar() or 0 # this returns the toal count of post
+    total = count_result.scalar() or 0 # this returns the total count of post, if no post then 0
 
     result = await db.execute(
         select(models.Post)
