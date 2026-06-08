@@ -16,7 +16,7 @@ from auth import create_access_token, hash_password, verify_password, CurrentUse
 from config import settings
 from PIL import UnidentifiedImageError
 from starlette.concurrency import run_in_threadpool
-from image_utlis import delete_profile_image, process_profile_image
+from image_utils import delete_profile_image, process_profile_image
 
 
 router = APIRouter()

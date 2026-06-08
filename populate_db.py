@@ -5,7 +5,6 @@ from pathlib import Path
 
 import httpx
 from sqlalchemy import delete, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import models
 from database import AsyncsessionLocal, engine
@@ -244,7 +243,7 @@ async def clear_existing_data() -> None:
         print(f"Deleted profile pictures from {PROFILE_PICS_DIR}")
 
     # Clear database tables (order respects foreign keys)
-    async with AsyncSessionLocal() as db:
+    async with AsyncsessionLocal() as db:
         await db.execute(delete(models.Post))
         await db.execute(delete(models.User))
         await db.commit()
@@ -254,7 +253,7 @@ async def clear_existing_data() -> None:
 async def update_post_dates() -> None:
     now = datetime.now(UTC)
 
-    async with AsyncSessionLocal() as db:
+    async with AsyncsessionLocal() as db:
         result = await db.execute(select(models.Post).order_by(models.Post.id))
         posts = result.scalars().all()
 
