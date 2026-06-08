@@ -5,6 +5,7 @@ from pathlib import Path
 
 import httpx
 from sqlalchemy import delete, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import models
 from database import AsyncsessionLocal, engine
