@@ -30,15 +30,15 @@ async def get_posts(
         )
     posts = result.scalars().all()
 
-    has_more = skip + len(posts) < total
+    has_more = skip + len(posts) < total # if the number of posts is less than the total then there are more posts to fetch
 
     return PaginatedPostsResponse(
-        posts= [PostResponse.model_validate(post) for post in posts],
+        posts= [PostResponse.model_validate(post) for post in posts], # over here the posts is the posts that is defined in line 31
         total=total,
         skip=skip,
         limit=limit,
         has_more=has_more,
-    )
+    ) 
 
 
 @router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED,)
