@@ -13,6 +13,8 @@ class Settings(BaseSettings):
 
     max_upload_size_bytes: int = 5*1024*1024 #for pro pic purposees
 
+    posts_per_page: int  = 10
+
 #loaded from .env file
 #basically to use the sensitive values
 settings = Settings() 
