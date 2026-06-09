@@ -36,7 +36,7 @@ def generate_reset_tokens() -> str:
     return secrets.token_urlsafe(32) # this function produces urlsafe base 64 characters perfect for emails
 
 def hash_reset_token(token:str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest  # takes a token and returns its sha256 hash
+    return hashlib.sha256(token.encode()).hexdigest()  # takes a token and returns its sha256 hash
 
 
 #creates a copy a data, adds an expiration time and encodes them as json web tokens
