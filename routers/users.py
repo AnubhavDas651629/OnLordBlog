@@ -167,8 +167,9 @@ async def reset_password(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired reset token",
         )
-    
-    if reset_token.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
+    # sql lite strips the date time function so in order to re use the date time we need to back revert the date time so that we could compare it, hence we use tzinfo = UTC, this step would not be needed in case of postgress sql
+    # in this we are deleting the token if it has expired and throwing an erorr
+    if reset_token.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):  
         await db.delete(reset_token)
         await db.commit()
         raise HTTPException(
@@ -180,6 +181,25 @@ async def reset_password(
         select(models.User).where(models.User.id == reset_token.user_id),
     )
     user = result.scalar().first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token",
+        )
+
+    user.password_hash = hash_password(request_data.new_password)
+
+    await db.execute(
+        sql_delete(models.PasswordResetToken).where(
+            models.PasswordResetToken.user_id == user.id,
+        ),
+    )
+
+    await db.commit()
+    return{
+        "message": "Password reset successfully. You can now log in with your new password"
+    }
 
 
 @router.get("/{user_id}", response_model=UserPublic)
