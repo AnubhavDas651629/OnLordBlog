@@ -8,7 +8,7 @@ from config import settings
 
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select 
 from sqlalchemy.ext.asyncio import AsyncSession
 import models
 from config import settings
