@@ -113,7 +113,7 @@ async def forgot_password(
             func.lower(models.User.email) == request_data.email.lower(),
         ),
     )
-    user = result.scalar().first()
+    user = result.scalars().first()
 
     # if a user exists then we are deleting any token associated with the user 
     if user:
@@ -123,7 +123,7 @@ async def forgot_password(
             ),
         )
 
-        token = generate_reset_tokens(),
+        token = generate_reset_tokens()
         token_hash = hash_reset_token(token)
         expires_at = datetime.now(UTC) + timedelta(
             minutes = settings.reset_token_expiration_minutes
