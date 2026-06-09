@@ -37,7 +37,7 @@ class User(Base):
     #reset_tokens is used for establishing relationship among the class PasswordResetToken and the User class
     # cascade = all -> tells that if a user is deleted than all its reset tokens is deleted as well
     reset_tokens: Mapped[list[PasswordResetToken]] = relationship(     
-        back_populates="author",
+        back_populates="user",
         cascade="all, delete-orphan",
     )
 
@@ -70,7 +70,7 @@ class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 
     id:Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     expires_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
