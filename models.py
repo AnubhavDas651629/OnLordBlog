@@ -3,8 +3,13 @@
 
 from __future__ import annotations
 from datetime import UTC, datetime
+from email.policy import strict
+from email.utils import unquote
+from sqlite3 import Date
+import string
+import time
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, null
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -27,6 +32,14 @@ class User(Base):
     # forward referecning, till now Post is not defined, will define later in this code base 
     # cascade = all -> tells that if a user is deleted than all its post is deleted too
     posts: Mapped[list[Post]] = relationship(back_populates="author", cascade="all, delete-orphan",)
+
+
+    #reset_tokens is used for establishing relationship among the class PasswordResetToken and the User class
+    # cascade = all -> tells that if a user is deleted than all its reset tokens is deleted as well
+    reset_tokens: Mapped[list[PasswordResetToken]] = relationship(     
+        back_populates="author",
+        cascade="all, delete-orphan",
+    )
 
     @property
     def image_path(self) -> str:
@@ -52,6 +65,23 @@ class Post(Base):
     )
 
     author: Mapped[User] = relationship(back_populates="posts")
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id:Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    token_hash: Mapped[int] = mapped_column(string(64), unique=True, nullable=False)
+    expires_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+    )
+
+    user: Mapped[User] = relationship(back_populates="reset_tokens")
 
 
      

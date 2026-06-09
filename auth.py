@@ -14,6 +14,10 @@ import models
 from config import settings
 from database import get_db
 
+import hashlib
+import secrets 
+
+
 password_hash = PasswordHash.recommended() #creates password hasher using argon 2 with recommended settings
 
 # OAuth2PasswordBearer extracts the token from the authorization header
@@ -26,6 +30,13 @@ def hash_password(password: str) -> str:
 # fn verifies password
 def verify_password(plain_password: str, hashed_password:str) -> bool:
     return password_hash.verify(plain_password, hashed_password)
+
+
+def generate_reset_tokens() -> str:
+    return secrets.token_urlsafe(32) # this function produces urlsafe base 64 characters perfect for emails
+
+def hash_reset_token(token:str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest  # takes a token and returns its sha256 hash
 
 
 #creates a copy a data, adds an expiration time and encodes them as json web tokens

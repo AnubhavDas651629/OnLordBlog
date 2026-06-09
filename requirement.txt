@@ -9,3 +9,6 @@ pydantic-settings
 for photo related tasks ->
 pillow
 
+for token and password chaning install the lib
+aiosmtplib
+
