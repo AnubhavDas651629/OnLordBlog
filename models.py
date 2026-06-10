@@ -63,6 +63,7 @@ class Post(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC), # lamba called so that after envery entry datetime gets reset and current date and time would be shown
     )
+    likes: Mapped[int] = mapped_column(Integer, default=0, server_default="0") # for the likes in the post, default = 0 is the python's side 0, server_default = 0, is the database side = 0
 
     author: Mapped[User] = relationship(back_populates="posts")
 

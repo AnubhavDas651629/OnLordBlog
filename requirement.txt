@@ -30,3 +30,8 @@ for alembic installation ->
 after doing this move on to the alembic.ini file and scroll down to sqlalchemy.url and delete the url given there, as we are manaully doing it 
 then move on to alembic/env.py -> import models, from config import settings , from database import Base
 look for #-----------ADDED----------------
+
+alembic migrations ->
+uv run alembic revision --autogenerate -m "initial schema"
+uv run alembic upgrade head -> for up to dating the amebinc schemas
+uv run alembic current -> for current status

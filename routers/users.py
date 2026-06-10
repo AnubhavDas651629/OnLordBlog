@@ -170,7 +170,8 @@ async def reset_password(
         )
     # sql lite strips the date time function so in order to re use the date time we need to back revert the date time so that we could compare it, hence we use tzinfo = UTC, this step would not be needed in case of postgress sql
     # in this we are deleting the token if it has expired and throwing an erorr
-    if reset_token.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):  
+    # if reset_token.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):  
+    if reset_token.expires_at < datetime.now(UTC):  
         await db.delete(reset_token)
         await db.commit()
         raise HTTPException(
