@@ -181,7 +181,7 @@ async def reset_password(
     result = await db.execute(
         select(models.User).where(models.User.id == reset_token.user_id),
     )
-    user = result.scalar().first()
+    user = result.scalars().first()
 
     if not user:
         raise HTTPException(
