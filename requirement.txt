@@ -12,3 +12,13 @@ pillow
 for token and password chaning install the lib
 aiosmtplib
 
+for postgress method ->
+1)firstly install -> brew install postgresql@18
+2)then run postgresql -> brew services start postgresql@18
+3)to create a database user with a password ->  psql postgres -c "CREATE USER bloguser WITH PASSWORD 'blogpass';"
+4)now create a database and amking the user the owner of the databse -> createdb blog -O bloguser
+5) now verify if everything is wokring properly -> psql blog -U bloguser 
+\dt for finding existing tables
+\q for exiting out of blog
+
+uv add "psycopg[binary]" -> for running it locally via python
