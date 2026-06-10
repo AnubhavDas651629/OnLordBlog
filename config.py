@@ -6,6 +6,9 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
     )
+
+    database_url: str
+    
     secret_key: SecretStr   # returns unrecognizable format of values
     # the secret_key maps to SECRET_KEY in the .env
     algorithm: str = "HS256"    #standard for json web tokens

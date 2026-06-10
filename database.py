@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_session, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./blog.db"
+from config import settings
+
 
 #engine is the connection to the database, 
 #connect_args={"check_same_thread": False} this is specifc for sql lite only, and not needed to postgress or mysql
