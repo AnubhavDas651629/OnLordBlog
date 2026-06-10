@@ -25,5 +25,8 @@ uv add "psycopg[binary]" -> for running it locally via python
 
 
 for alembic installation ->
-uv add alembic
-uv run alembic init -t async alembic  (the -t async tells to load the whole async manual and the last alembic is for telling where our migration files will go which is hte alembic/versions)
+1)uv add alembic
+2)uv run alembic init -t async alembic  (the -t async tells to load the whole async manual and the last alembic is for telling where our migration files will go which is hte alembic/versions)
+after doing this move on to the alembic.ini file and scroll down to sqlalchemy.url and delete the url given there, as we are manaully doing it 
+then move on to alembic/env.py -> import models, from config import settings , from database import Base
+look for #-----------ADDED----------------
