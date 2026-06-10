@@ -22,3 +22,8 @@ for postgress method ->
 \q for exiting out of blog
 
 uv add "psycopg[binary]" -> for running it locally via python
+
+
+for alembic installation ->
+uv add alembic
+uv run alembic init -t async alembic  (the -t async tells to load the whole async manual and the last alembic is for telling where our migration files will go which is hte alembic/versions)
