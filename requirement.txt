@@ -36,3 +36,7 @@ uv run alembic revision --autogenerate -m "initial schema"
 uv run alembic upgrade head -> for up to dating the amebinc schemas
 uv run alembic current -> for current status
 alembic downgrade -1 -> to downgrade a step
+
+
+
+boto3 - official aws sdk for python
