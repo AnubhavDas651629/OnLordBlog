@@ -89,14 +89,23 @@ async def db_session(
             await trans.rollback()
             await conn.close()
    
-# Mocked AWS
+# Mocked 
+@pytest.fixture
 def mocked_aws():
     with mock_aws():
-        s3 = boto3.client("s3", region_name="ap-south-1")
-        s3.create_bucket(Bucket=os.environ["S3_BUCKET_NAME"])
+        region = "ap-south-1"
+        s3 = boto3.client("s3", region_name=region)
+        
+        s3.create_bucket(
+            Bucket=os.environ["S3_BUCKET_NAME"],
+            CreateBucketConfiguration={
+                "LocationConstraint": region
+            }
+        )
         yield s3
 
 # CLient fixture
+@pytest.fixture
 async def client(
     db_session: AsyncSession,
     mocked_aws,
