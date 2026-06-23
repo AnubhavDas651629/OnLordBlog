@@ -47,3 +47,6 @@ uv add --dev pytest
 uv add --dev "moto[s3]"
 
 uv run pytest tests/test_demo.py -v (to run the tests)
+
+postgres testing method used-
+createdb test_blog -O bloguser
