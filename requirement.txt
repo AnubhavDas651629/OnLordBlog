@@ -40,3 +40,10 @@ alembic downgrade -1 -> to downgrade a step
 
 
 boto3 - official aws sdk for python
+
+pytest - for testing
+
+uv add --dev pytest 
+uv add --dev "moto[s3]"
+
+uv run pytest tests/test_demo.py -v (to run the tests)
