@@ -36,7 +36,7 @@ async def test_create_user_duplicate_email(client: AsyncClient):
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Email already registered"
+    assert response.json()["detail"] == "email already exists"
 
 # Test Create User success
 @pytest.mark.anyio
@@ -79,8 +79,8 @@ async def test_upload_profile_picture(client: AsyncClient, mocked_aws): # mocked
     data = response.json()
     assert data["image_file"] is not None
     assert data["image_file"].endswith(".jpg")
-    assert "s3" in data["image_path"]
-
+    assert "/media/profile_pics/" in data["image_path"]
+    
     s3_objects = mocked_aws.list_objects_v2(Bucket="test-bucket")  # to check wether the data actually exists in the mocked s3 bucket
     assert "Contents" in s3_objects
     assert len(s3_objects["Contents"]) == 1

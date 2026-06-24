@@ -25,14 +25,14 @@ async def test_get_posts_not_found(client: AsyncClient):
 
 # Test Create Post Success
 @pytest.mark.anyio
-async def test_create_post_successs(Client:AsyncClient):
+async def test_create_post_successs(client:AsyncClient):
     user = await create_test_user(client)
     token = await login_user(client)
     headers = auth_header(token)
 
     response = await client.post(
         "/api/posts",
-        json={"title":"My first post", "content": "This is the content"},
+        json={"title":"My first Post", "content": "This is the content"},
         headers = headers,
     )
 
@@ -53,7 +53,7 @@ async def test_create_post_unauthorized(client: AsyncClient):
     )
 
     assert response.status_code == 401
-    assert response.json()["detail"] == "Not Authenticated"
+    assert response.json()["detail"] == "Not authenticated"
 
 # Test update Post success
 @pytest.mark.anyio

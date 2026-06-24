@@ -141,18 +141,19 @@ async def create_test_user(
 
 async def login_user(
     client: AsyncClient,
-    email:str="test@example.com",
-    password: str = "testpasssword123",
-) -> str :
+    email: str = "test@example.com",
+    password: str = "testpassword123",
+) -> str:
     response = await client.post(
-        "/api/users/tokens",
+        "/api/users/token",
         data={
-            "username":email,
-            "password":password,
+            "username": email,
+            "password": password,
         },
     )
     assert response.status_code == 200, f"Failed to login: {response.text}"
     return response.json()["access_token"]
+
 
 def auth_header(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
