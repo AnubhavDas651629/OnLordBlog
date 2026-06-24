@@ -30,7 +30,7 @@ app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(posts.router, prefix="/api/posts", tags=["posts"])
 
 # Health Check endpoint, imp as it tells if everything is working fine if not then alerts, in our model our database is our heart if this is down everything else is down
-@app.get("health")
+@app.get("/health")
 async def health_check(db: Annotated[AsyncSession, Depends(get_db)]):
     try:
         await db.execute(text("SELECT1"))
