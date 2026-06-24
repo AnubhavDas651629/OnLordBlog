@@ -90,9 +90,9 @@ async def test_upload_profile_picture(client: AsyncClient, mocked_aws): # mocked
 @pytest.mark.anyio
 async def test_forgot_password_sends_email(client: AsyncClient):
     await create_test_user(client)
-
+#patch comes from unittest.mock  (in the imports initially)
     with patch(
-        "routers.users.send_password_reset_email",
+        "routers.users.send_password_reset_email",  #send_password_reset_email this fn lives inside our email_utils.py module
         new_callable=AsyncMock,
     ) as mock_send:
         response = await client.post(
