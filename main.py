@@ -33,11 +33,8 @@ app.include_router(posts.router, prefix="/api/posts", tags=["posts"])
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next): #call_next basically is a middleware which modifies(adds security feautures before sending/reviecing the response)
     response = await call_next(request)
-
     response.headers["X-Frame-Options"] = "SAMEORIGIN"  # X-Frame-Origin prevents other websites from embedding our site in an iframe, which prevents clickjacking attacks
-
     response.headers["X-Content-Type-Options"] = "nosniff" #X-content-type-options tells the brwoser to trust the content type that we sent and not guess what type of content it is
-
     if "Referrer-Policy" not in response.headers:
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 

@@ -52,4 +52,3 @@ uv run pytest tests/ -s -> if we want to see the outputs of the tests
 postgres testing method used-
 createdb test_blog -O bloguser
 
-Deploying to Linodes(vps)
