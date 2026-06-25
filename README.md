@@ -1,4 +1,4 @@
-# FastAPI Blog 🚀
+# FastAPI Blog Platform
 
 A modern, full-featured blogging platform built from the ground up with **FastAPI**, **SQLAlchemy 2.0 (Async)**, **PostgreSQL / SQLite**, **AWS S3**, and **Jinja2**. 
 
@@ -6,36 +6,74 @@ This project demonstrates production-ready backend architecture, bridging robust
 
 ---
 
-## ✨ Features & Highlights
+## System Architecture
 
-- **🏛️ Hybrid Architecture**:
-  - **JSON REST API** endpoints (`/api/users`, `/api/posts`) with automatic interactive OpenAPI documentation.
-  - **Server-Side Rendering (SSR)** using **Jinja2** templates for responsive, rich user interfaces (Home, Posts, Account, Login, Register, Forgot/Reset Password).
-- **🔐 Robust Security & Authentication**:
-  - **OAuth2 with Password Flow**: Stateless Bearer **JWT** access tokens signed via `PyJWT`.
-  - **Argon2 Password Hashing**: State-of-the-art password verification using `pwdlib`.
-  - **Security Headers Middleware**: Automatically injects `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, and `Strict-Transport-Security` headers to safeguard against clickjacking, MIME-sniffing, and XSS.
-  - **Secure Password Reset Flow**: Generates URL-safe base64 reset tokens, stores only SHA-256 hashes in the database, and enforces 1-hour expiration tracking.
-- **🗄️ Asynchronous Database & ORM**:
-  - Built on **SQLAlchemy 2.0** utilizing `AsyncSession` and `async_sessionmaker`.
-  - Prevents N+1 query performance bottlenecks using explicit eager loading (`selectinload`).
-  - Supports **PostgreSQL** (e.g., Neon Serverless Postgres pooled runtime) and **SQLite** (`aiosqlite`).
-  - Managed schema evolutions via **Alembic** migrations.
-- **🖼️ AWS S3 & Image Processing Pipeline**:
-  - Profile picture uploads with strict file size constraints (max 5MB) and type validation.
-  - Asynchronous threadpool processing via **Pillow**: automatic EXIF orientation transposition, Lanczos high-quality cropping/resampling to 300x300px, RGB conversion, and JPEG compression.
-  - Seamless AWS S3 storage integration (`boto3`) with UUIDv4 randomized filenames.
-- **📧 Async Email Dispatching & Background Tasks**:
-  - Non-blocking email sending powered by `aiosmtplib` and FastAPI `BackgroundTasks`.
-  - Multi-part HTML and plain-text password reset templates.
-- **🩺 DevOps & Production Readiness**:
-  - Multi-stage **Dockerfile** powered by Astral's `uv` package manager, optimized for minimal layer size and running under a non-root security user (`appuser`).
-  - Dedicated `/health` probe verifying live database connectivity.
-  - Automated database seed script (`populate_db.py`) generating realistic test accounts, profile pictures, and paginated blog posts.
+The following diagram illustrates the request lifecycle, middleware layer, route routing, business services, and external persistence integrations:
+
+```mermaid
+graph TD
+    Client["Client (Browser / API Consumer)"] -->|HTTP / REST Requests| App["FastAPI Application Core"]
+
+    subgraph MiddlewareLayer ["Security & Middleware Layer"]
+        App --> SecHeaders["Security Headers Middleware"]
+        SecHeaders --> CORS["CORS Middleware"]
+    end
+
+    subgraph RouterLayer ["Routing & Presentation"]
+        CORS --> SSR["Jinja2 SSR View Routes"]
+        CORS --> APIRouters["REST API Routers (/api)"]
+        APIRouters --> UsersRouter["Users Router (/api/users)"]
+        APIRouters --> PostsRouter["Posts Router (/api/posts)"]
+    end
+
+    subgraph ServiceLayer ["Services & Core Logic"]
+        UsersRouter --> Auth["OAuth2 & JWT Auth Service"]
+        UsersRouter --> ImageProc["Pillow Image Processing"]
+        UsersRouter --> BgTasks["Background Email Dispatcher"]
+        PostsRouter --> Paginate["Pagination & Eager Loading Service"]
+    end
+
+    subgraph StorageLayer ["Persistence & External Infrastructure"]
+        Auth --> DB[(Async SQLAlchemy Engine)]
+        Paginate --> DB
+        DB --> Postgres["PostgreSQL / Neon Pooler"]
+        DB --> SQLite["SQLite (Local / Testing)"]
+        
+        ImageProc --> S3["AWS S3 Bucket (Avatars)"]
+        BgTasks --> SMTP["SMTP Server / Mailtrap"]
+    end
+```
 
 ---
 
-## 🛠️ Tech Stack
+## Key Features
+
+- **Hybrid Architecture**:
+  - **JSON REST API** endpoints (`/api/users`, `/api/posts`) conforming to OpenAPI specifications with interactive Swagger UI and ReDoc documentation.
+  - **Server-Side Rendering (SSR)** using **Jinja2** templates for dynamic web interfaces (Home, Posts Archive, User Dashboard, Authentication, and Password Recovery).
+- **Security & Authentication**:
+  - **OAuth2 with Password Flow**: Stateless Bearer JWT access tokens with structured payload claims signed via `PyJWT`.
+  - **Argon2 Password Hashing**: Cryptographic password storage and verification powered by `pwdlib`.
+  - **Security Headers Middleware**: Enforces defense-in-depth by injecting `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, and `Strict-Transport-Security` headers across all HTTP responses.
+  - **Account Recovery Pipeline**: Cryptographically secure random token generation (URL-safe base64) with SHA-256 database hashing and strict 60-minute TTL expiration enforcement.
+- **Asynchronous Database & ORM**:
+  - Built on **SQLAlchemy 2.0** utilizing asynchronous drivers (`psycopg` and `aiosqlite`) via `AsyncSessionLocal`.
+  - Query optimization utilizing explicit eager relationship loading (`selectinload`) to eliminate N+1 latency bottlenecks.
+  - Schema versioning and migration tracking managed through **Alembic**.
+- **Media Processing & Storage**:
+  - Profile avatar uploads with strict size boundaries (maximum 5MB) and MIME type verification.
+  - Asynchronous threadpool execution (`run_in_threadpool`) offloading CPU-bound **Pillow** operations: automatic EXIF orientation transposition, Lanczos resampling (300x300px), color mode normalization, and JPEG optimization.
+  - External persistence mapping to AWS S3 (`boto3`) utilizing non-enumerable UUIDv4 object keys.
+- **Background Task Execution**:
+  - Asynchronous email dispatching powered by `aiosmtplib` and FastAPI `BackgroundTasks` for zero-latency HTTP responses during password resets.
+- **DevOps & Containerization**:
+  - Multi-stage **Dockerfile** powered by Astral's `uv` package manager, reducing container image footprint and running exclusively under a non-privileged system user (`appuser`).
+  - Active `/health` probe endpoint for container orchestration readiness and liveness checks.
+  - Comprehensive automated database seeding script (`populate_db.py`).
+
+---
+
+## Technology Stack
 
 | Category | Technologies |
 | :--- | :--- |
@@ -52,7 +90,7 @@ This project demonstrates production-ready backend architecture, bridging robust
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```text
 fastapi_blog/
@@ -82,13 +120,13 @@ fastapi_blog/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 - **Python 3.12+**
 - **[uv](https://docs.astral.sh/uv/)** (Recommended package manager) or standard `pip`
 - An **AWS S3 Bucket** (for profile picture storage)
-- A **PostgreSQL** database (or SQLite for quick local trials)
+- A **PostgreSQL** database (or SQLite for local development)
 - An **SMTP Server** (e.g., [Mailtrap](https://mailtrap.io/) for development testing)
 
 ### 2. Clone & Install Dependencies
@@ -97,7 +135,7 @@ fastapi_blog/
 git clone <repository_url>
 cd fastapi_blog
 
-# Using uv (Superfast dependency resolution)
+# Using uv (High-speed dependency resolution)
 uv sync
 
 # OR using standard pip & virtual environment
@@ -108,7 +146,7 @@ pip install -e .
 
 ### 3. Environment Variables Configuration
 
-Create a `.env` file in the root directory. You can reference the required parameters below:
+Create a `.env` file in the project root directory. Reference the required parameters below:
 
 ```ini
 # Application Security
@@ -129,10 +167,10 @@ S3_BUCKET_NAME="your-s3-bucket-name"
 S3_REGION="us-east-1"
 S3_ACCESS_KEY_ID="your_aws_access_key"
 S3_SECRET_ACCESS_KEY="your_aws_secret_key"
-# Optional endpoint URL (e.g. for S3-compatible providers like MinIO / Cloudflare R2):
+# Optional endpoint URL (e.g. for S3-compatible providers):
 # S3_ENDPOINT_URL=""
 
-# SMTP Email Dispatcher (e.g., Mailtrap Sandbox)
+# SMTP Email Dispatcher
 MAIL_SERVER="sandbox.smtp.mailtrap.io"
 MAIL_PORT=2525
 MAIL_USERNAME="your_smtp_username"
@@ -143,7 +181,7 @@ MAIL_USE_TLS=true
 
 ### 4. Run Database Migrations
 
-Apply the existing Alembic migration scripts to generate your database tables:
+Apply existing Alembic migration scripts to initialize the database schema:
 
 ```bash
 uv run alembic upgrade head
@@ -151,7 +189,7 @@ uv run alembic upgrade head
 
 ### 5. Seed Database (Optional)
 
-Populate your database with sample users, mock blog posts, and avatar pictures:
+Populate the database with test accounts, mock posts, and profile avatars:
 
 ```bash
 uv run python populate_db.py
@@ -159,7 +197,7 @@ uv run python populate_db.py
 
 ### 6. Launch Development Server
 
-Start the FastAPI application server with live reload enabled:
+Start the application server with hot reload enabled:
 
 ```bash
 uv run fastapi dev main.py
@@ -167,39 +205,39 @@ uv run fastapi dev main.py
 uv run uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Visit the web application at: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
+Access the application interface at: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
 
 ---
 
-## 🔌 API Documentation & Endpoints
+## API Documentation & Endpoints
 
-When the server is running, FastAPI automatically generates interactive API documentation.
+When running locally, FastAPI generates interactive API specifications automatically.
 - **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - **ReDoc**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
-### 📡 REST API Summary (`/api`)
+### REST API Summary (`/api`)
 
-| Method | Endpoint | Description | Auth Required |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/users` | Register a new user account | ❌ |
-| `POST` | `/api/users/token` | Obtain OAuth2 Bearer JWT access token | ❌ |
-| `GET` | `/api/users/me` | Retrieve authenticated user details | ✅ |
-| `GET` | `/api/users/{id}` | Retrieve public profile of a user | ❌ |
-| `PATCH` | `/api/users/{id}` | Update username or email address | ✅ |
-| `DELETE`| `/api/users/{id}` | Delete user account and associated posts | ✅ |
-| `PATCH` | `/api/users/{id}/picture` | Upload & process new profile avatar | ✅ |
-| `DELETE`| `/api/users/{id}/picture` | Remove avatar and revert to default | ✅ |
-| `POST` | `/api/users/forgot-password` | Request password reset token & email | ❌ |
-| `POST` | `/api/users/reset-password` | Submit password reset token & new password | ❌ |
-| `PATCH` | `/api/users/me/password` | Change password for logged-in user | ✅ |
-| `GET` | `/api/posts` | List paginated blog posts (`skip`, `limit`) | ❌ |
-| `POST` | `/api/posts` | Create a new blog post | ✅ |
-| `GET` | `/api/posts/{id}` | Fetch a specific blog post | ❌ |
-| `PUT` | `/api/posts/{id}` | Fully update a blog post | ✅ |
-| `PATCH` | `/api/posts/{id}` | Partially update a blog post | ✅ |
-| `DELETE`| `/api/posts/{id}` | Delete a blog post | ✅ |
+| Method | Endpoint | Description | Authentication |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/users` | Register a new user account | None |
+| `POST` | `/api/users/token` | Obtain OAuth2 Bearer JWT access token | None |
+| `GET` | `/api/users/me` | Retrieve authenticated user details | Required |
+| `GET` | `/api/users/{id}` | Retrieve public profile of a user | None |
+| `PATCH` | `/api/users/{id}` | Update username or email address | Required |
+| `DELETE`| `/api/users/{id}` | Delete user account and associated posts | Required |
+| `PATCH` | `/api/users/{id}/picture` | Upload & process new profile avatar | Required |
+| `DELETE`| `/api/users/{id}/picture` | Remove avatar and revert to default | Required |
+| `POST` | `/api/users/forgot-password` | Request password reset token & email | None |
+| `POST` | `/api/users/reset-password` | Submit password reset token & new password | None |
+| `PATCH` | `/api/users/me/password` | Change password for logged-in user | Required |
+| `GET` | `/api/posts` | List paginated blog posts (`skip`, `limit`) | None |
+| `POST` | `/api/posts` | Create a new blog post | Required |
+| `GET` | `/api/posts/{id}` | Fetch a specific blog post | None |
+| `PUT` | `/api/posts/{id}` | Fully update a blog post | Required |
+| `PATCH` | `/api/posts/{id}` | Partially update a blog post | Required |
+| `DELETE`| `/api/posts/{id}` | Delete a blog post | Required |
 
-### 🖥️ Frontend View Routes (SSR)
+### Frontend View Routes (SSR)
 
 | Route | Description |
 | :--- | :--- |
@@ -211,35 +249,35 @@ When the server is running, FastAPI automatically generates interactive API docu
 | `/account` | User profile & settings dashboard |
 | `/forgot-password` | Password reset request form |
 | `/reset-password` | Token verification & password update form |
-| `/health` | Kubernetes / Docker health check probe (`{"status": "healthy"}`) |
+| `/health` | Service liveness probe (`{"status": "healthy"}`) |
 
 ---
 
-## 🐳 Docker Deployment
+## Container Deployment
 
-The included multi-stage `Dockerfile` leverages `uv` bytecode compilation and link optimizations for lightweight container builds.
+The multi-stage `Dockerfile` leverages `uv` bytecode compilation and dependency isolation to construct lightweight production containers.
 
 ```bash
 # Build the production Docker image
 docker build -t fastapi-blog:latest .
 
-# Run the container
+# Launch containerized service
 docker run -d -p 8080:8080 --env-file .env fastapi-blog:latest
 ```
 
 ---
 
-## 🧪 Testing
+## Testing
 
-The test suite runs asynchronously using `pytest`, `pytest-asyncio`, and `httpx.AsyncClient`.
+The test suite executes asynchronously using `pytest`, `pytest-asyncio`, and `httpx.AsyncClient`.
 
 ```bash
-# Execute unit and integration tests
+# Run automated test suite
 uv run pytest -v
 ```
 
 ---
 
-## 📄 License
+## License
 
-This project is open-source and available for educational and commercial use.
+This project is open-source and distributed under standard licensing terms.
