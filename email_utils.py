@@ -1,4 +1,3 @@
-from cgitb import reset
 from email import message
 from email.message import EmailMessage
 
