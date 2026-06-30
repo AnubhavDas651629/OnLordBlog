@@ -1,11 +1,7 @@
 import boto3
-from fileinput import filename
 import uuid
 from io import BytesIO
 from PIL import Image, ImageOps
-from jinja2.bccache import Bucket
-from pydantic import FilePath
-import boto3
 from starlette.concurrency import run_in_threadpool
 
 from config import settings

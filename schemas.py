@@ -22,7 +22,7 @@ class UserPrivate(UserPublic): #done in order to protect privacy by hiding email
 
 class UserUpdate(BaseModel):
     username: str | None = Field(default=None, min_length=1, max_length=50)
-    email: str | None = Field(default=None, max_length=120)
+    email: EmailStr | None = Field(default=None, max_length=120)
 
 class Token(BaseModel):
     access_token: str

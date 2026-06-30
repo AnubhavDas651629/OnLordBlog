@@ -56,3 +56,14 @@ docker build -t fastapi-app . (building docker image, the -t tags our image with
 docker run -p 8080:8080 --env-file .env fastapi-app (--env-file .env reads all the environment variables from the .env file, then we are runnign the image that we just build)
 
 brew install --cask gcloud-cli
+gcloud auth login
+gcloud config set project ENTER_PROJECT_ID
+gcloud services enable run.googleapis.com
+gcloud services enable cloudbuild.googleapis.com
+gcloud services enable artifactregistry.googleapis.com
+gcloud services list --enabled (to list out active gcloud services)
+
+-> create a repo
+gcloud artifacts repositories create fastapi-repo \
+--repository-format=docker \
+--location=asia-south2
